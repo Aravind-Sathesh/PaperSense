@@ -1,0 +1,14 @@
+# Python virtual environment
+venv/
+
+# Python caches
+__pycache__/
+*.pyc
+
+.vscode/
+.idea/
+.DS_Store
+
+*.pdf
+
+.env
