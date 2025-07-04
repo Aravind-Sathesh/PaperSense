@@ -5,6 +5,7 @@ from langchain_community.embeddings import GPT4AllEmbeddings
 from langchain_community.chat_models import ChatOllama
 from langchain.chains import ConversationalRetrievalChain
 from langchain.memory import ConversationBufferMemory
+from langchain.prompts import PromptTemplate
 
 
 def process_and_store_documents(pdf_docs):
@@ -33,20 +34,40 @@ def process_and_store_documents(pdf_docs):
     return vector_store
 
 
+CUSTOM_PROMPT_TEMPLATE = """
+Use the following pieces of context to answer the question at the end.
+If you don't know the answer, just say that you don't know, don't try to make up an answer.
+Your answer should be concise and formatted in markdown.
+
+Context: {context}
+Chat History: {chat_history}
+Question: {question}
+
+Helpful Answer:
+"""
+
+
 def get_qa_chain(vector_store):
     """
-    Creates and returns a conversational Q&A chain.
+    Creates and returns a conversational Q&A chain with a custom prompt.
     """
     llm = ChatOllama(model="mistral", temperature=0.2)
 
     memory = ConversationBufferMemory(
         memory_key='chat_history',
-        return_messages=True
+        return_messages=True,
+        output_key='answer'
+    )
+
+    custom_prompt = PromptTemplate(
+        template=CUSTOM_PROMPT_TEMPLATE,
+        input_variables=["context", "chat_history", "question"]
     )
 
     conversation_chain = ConversationalRetrievalChain.from_llm(
         llm=llm,
         retriever=vector_store.as_retriever(),
-        memory=memory
+        memory=memory,
+        combine_docs_chain_kwargs={"prompt": custom_prompt}
     )
     return conversation_chain
