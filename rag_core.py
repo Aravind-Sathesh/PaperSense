@@ -79,22 +79,21 @@ def get_comprehensive_summary_chain():
 
 
 CUSTOM_PROMPT_TEMPLATE = """
-You are a specialized AI assistant for answering questions based strictly on a given document.
-You are given a context from the document and a question. Your task is to provide a concise answer.
+You are a specialized AI assistant. Your task is to provide a concise answer to a question based strictly on a given 'Context'.
 
-**IMPORTANT: Your entire response MUST be based ONLY on the text provided in the 'Context' section.**
-Do not use any of your own knowledge.
+**IMPORTANT RULES:**
+1. Your entire response MUST be based ONLY on the text provided in the 'Context'. Do not use any of your own knowledge.
+2. If the context does not contain the answer, you MUST respond with the single sentence: 'I cannot answer this question based on the provided document context.'
 
-Follow these rules with no exceptions:
-1.  Analyze the 'Context' to see if it contains the information needed to answer the 'Question'.
-2.  If the context contains the answer, formulate a direct and concise response based on that information.
-3.  If the context does NOT contain the information, you MUST respond with the single sentence: 'I cannot answer this question based on the provided document context.'
+**RESPONSE STYLE:**
+- Your final answer MUST be written entirely in the following language: {language}.
+- Your final answer MUST be in a {tone} tone.
 
 Context: {context}
 Chat History: {chat_history}
 Question: {question}
 
-Based strictly on the context provided, here is the answer:
+Answer (in {language} with a {tone} tone):
 """
 
 
@@ -112,14 +111,25 @@ def get_compression_retriever(vector_store):
     return compression_retriever
 
 
-def get_qa_chain(retriever, callbacks=None):
+def get_qa_chain(retriever, tone="Professional", language="English", callbacks=None):
     """
-    Creates and returns a conversational Q&A chain.
+    Creates and returns a conversational Q&A chain with dynamic prompt controls.
     """
     llm = ChatOllama(
         model="mistral",
         temperature=0.2,
         callbacks=callbacks
+    )
+
+    full_prompt_template = PromptTemplate(
+        template=CUSTOM_PROMPT_TEMPLATE,
+        input_variables=["context", "chat_history",
+                         "question", "tone", "language"]
+    )
+
+    partial_prompt_object = full_prompt_template.partial(
+        tone=tone,
+        language=language
     )
 
     memory = ConversationBufferMemory(
@@ -128,16 +138,11 @@ def get_qa_chain(retriever, callbacks=None):
         output_key='answer'
     )
 
-    custom_prompt_object = PromptTemplate(
-        template=CUSTOM_PROMPT_TEMPLATE,
-        input_variables=["context", "chat_history", "question"]
-    )
-
     conversation_chain = ConversationalRetrievalChain.from_llm(
         llm=llm,
         retriever=retriever,
         memory=memory,
-        combine_docs_chain_kwargs={"prompt": custom_prompt_object},
+        combine_docs_chain_kwargs={"prompt": partial_prompt_object},
         return_source_documents=True
     )
 

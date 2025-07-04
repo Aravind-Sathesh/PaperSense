@@ -43,6 +43,25 @@ def main():
         if st.session_state.conversation:
             st.markdown("---")
             st.header("Features")
+
+            tone_options = ["Professional", "Casual", "Explain Like I'm 5"]
+            selected_tone = st.selectbox(
+                "Select response tone:",
+                options=tone_options,
+                key="tone"
+            )
+
+            language_options = ["English", "Chinese",
+                                "French", "German", "Japanese", "Russian"]
+            selected_language = st.selectbox(
+                "Select response language:",
+                options=language_options,
+                key="language"
+            )
+
+            st.markdown("---")
+            st.header("Summarize")
+
             if st.button("⚡️ Quick Summary", use_container_width=True):
                 with st.spinner("Generating quick summary..."):
                     doc_chunks = st.session_state.doc_chunks
@@ -98,6 +117,8 @@ def main():
                 st_callback = StreamlitCallbackHandler(response_container)
                 qa_chain = get_qa_chain(
                     retriever=st.session_state.conversation.retriever,
+                    tone=st.session_state.tone,
+                    language=st.session_state.language,
                     callbacks=[st_callback]
                 )
 
