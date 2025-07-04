@@ -56,7 +56,7 @@ Based strictly on the context provided, here is the answer:
 
 def get_qa_chain(vector_store):
     """
-    Creates and returns a conversational Q&A chain with a custom prompt.
+    Creates and returns a conversational Q&A chain.
     """
     llm = ChatOllama(model="mistral", temperature=0.2)
 
@@ -66,7 +66,7 @@ def get_qa_chain(vector_store):
         output_key='answer'
     )
 
-    custom_prompt = PromptTemplate(
+    custom_prompt_object = PromptTemplate(
         template=CUSTOM_PROMPT_TEMPLATE,
         input_variables=["context", "chat_history", "question"]
     )
@@ -75,6 +75,7 @@ def get_qa_chain(vector_store):
         llm=llm,
         retriever=vector_store.as_retriever(),
         memory=memory,
-        combine_docs_chain_kwargs={"prompt": custom_prompt}
+        combine_docs_chain_kwargs={"prompt": custom_prompt_object},
+        return_source_documents=True
     )
     return conversation_chain

@@ -32,7 +32,14 @@ def main():
     if st.session_state.conversation:
         for message in st.session_state.chat_history:
             with st.chat_message(message["role"]):
-                st.markdown(message["content"])
+                if "sources" in message:
+                    st.markdown(message["content"])
+                    with st.expander("View Sources"):
+                        for source in message["sources"]:
+                            st.info(
+                                f"Page {source.metadata.get('page', 'N/A')}: \n\n{source.page_content}")
+                else:
+                    st.markdown(message["content"])
 
         if user_question := st.chat_input("Ask a question about your documents:"):
             st.session_state.chat_history.append(
@@ -44,11 +51,22 @@ def main():
                 response = st.session_state.conversation.invoke(
                     {'question': user_question})
                 ai_response = response['answer']
+                source_documents = response['source_documents']
 
-                st.session_state.chat_history.append(
-                    {"role": "assistant", "content": ai_response})
+                assistant_message = {
+                    "role": "assistant",
+                    "content": ai_response,
+                    "sources": source_documents
+                }
+
+                st.session_state.chat_history.append(assistant_message)
+
                 with st.chat_message("assistant"):
-                    st.markdown(ai_response)
+                    st.markdown(assistant_message["content"])
+                    with st.expander("View Sources"):
+                        for source in assistant_message["sources"]:
+                            st.info(
+                                f"Page {source.metadata.get('page', 'N/A')}: \n\n{source.page_content}")
     else:
         st.info(
             "Please upload and process your documents in the sidebar to start chatting.")
