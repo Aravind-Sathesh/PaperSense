@@ -35,15 +35,22 @@ def process_and_store_documents(pdf_docs):
 
 
 CUSTOM_PROMPT_TEMPLATE = """
-Use the following pieces of context to answer the question at the end.
-If you don't know the answer, just say that you don't know, don't try to make up an answer.
-Your answer should be concise and formatted in markdown.
+You are a specialized AI assistant for answering questions based strictly on a given document.
+You are given a context from the document and a question. Your task is to provide a concise answer.
+
+**IMPORTANT: Your entire response MUST be based ONLY on the text provided in the 'Context' section.**
+Do not use any of your own knowledge.
+
+Follow these rules with no exceptions:
+1.  Analyze the 'Context' to see if it contains the information needed to answer the 'Question'.
+2.  If the context contains the answer, formulate a direct and concise response based on that information.
+3.  If the context does NOT contain the information, you MUST respond with the single sentence: 'I cannot answer this question based on the provided document context.'
 
 Context: {context}
 Chat History: {chat_history}
 Question: {question}
 
-Helpful Answer:
+Based strictly on the context provided, here is the answer:
 """
 
 
