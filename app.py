@@ -41,7 +41,7 @@ def main():
                 st.markdown(user_question)
 
             with st.spinner("Assistant is thinking..."):
-                response = st.session_state.conversation(
+                response = st.session_state.conversation.invoke(
                     {'question': user_question})
                 ai_response = response['answer']
 
