@@ -1,12 +1,10 @@
-📚 PaperSense: AI Research Assistant
+# PaperSense: AI Research Assistant
 
 PaperSense is an intelligent, local-first application designed to help researchers, students, and professionals understand complex scientific documents. By leveraging a sophisticated Retrieval-Augmented Generation (RAG) pipeline, users can "chat" with their PDFs, asking nuanced questions and receiving accurate, source-verified answers.
 
 This project goes beyond a standard RAG implementation by incorporating an advanced **two-stage retrieval process with a cross-encoder re-ranker** to ensure the highest quality context is provided to the language model.
 
----
-
-## ✨ Key Features
+## Key Features
 
 -   **Interactive Chat Interface:** Upload one or more PDFs and ask questions in natural language.
 -   **Local-First & Private:** Powered by Ollama and local models like Mistral, ensuring your documents and queries never leave your machine.
@@ -16,7 +14,7 @@ This project goes beyond a standard RAG implementation by incorporating an advan
 -   **Trustworthy & Explainable:** Every answer is accompanied by a "View Sources" dropdown, showing the exact text chunks from the original document used to generate the response.
 -   **Robust & Grounded:** Utilizes a carefully engineered prompt template to minimize hallucinations and force the LLM to answer only based on the provided context.
 
-## 🏛️ Project Architecture
+## Project Architecture
 
 PaperSense is built on a modern, modular RAG architecture that emphasizes quality and control.
 
@@ -52,7 +50,7 @@ The data flows through the following pipeline:
 6.  **Augmented Generation:** The top 3 re-ranked chunks are combined with the chat history and a strict prompt template, then fed to the `Ollama` (Mistral) LLM.
 7.  **Answer & Sources:** The LLM generates an answer, which is then presented to the user along with the source chunks for verification.
 
-## 🛠️ Tech Stack
+## Tech Stack
 
 -   **Backend & Orchestration:** Python, LangChain
 -   **Large Language Model:** Ollama (with `mistral` model)
@@ -61,7 +59,7 @@ The data flows through the following pipeline:
 -   **Embeddings & Re-Ranking:** `GPT4All`, `sentence-transformers`
 -   **PDF Processing:** `PyPDF`
 
-## 🚀 Getting Started
+## Getting Started
 
 ### Prerequisites
 
@@ -107,10 +105,10 @@ The data flows through the following pipeline:
 
 3.  Open your web browser and navigate to `http://localhost:8501`.
 
-## ⏭️ Future Work
+## Future Work
 
 -   **Support for More File Types:** Extend the document loader to handle `.docx`, `.txt`, and URLs.
 
-## 📄 License
+## License
 
 This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
