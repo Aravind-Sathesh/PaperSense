@@ -1,11 +1,14 @@
-from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain.prompts import PromptTemplate
+from langchain.chains import ConversationalRetrievalChain
+from langchain.memory import ConversationBufferMemory
 from langchain_community.document_loaders import PyPDFLoader
+from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_community.vectorstores import FAISS
 from langchain_community.embeddings import GPT4AllEmbeddings
 from langchain_ollama import ChatOllama
-from langchain.chains import ConversationalRetrievalChain
-from langchain.memory import ConversationBufferMemory
-from langchain.prompts import PromptTemplate
+from langchain_community.cross_encoders import HuggingFaceCrossEncoder
+from langchain.retrievers import ContextualCompressionRetriever
+from langchain.retrievers.document_compressors import CrossEncoderReranker
 
 
 def process_and_store_documents(pdf_docs):
@@ -66,6 +69,16 @@ def get_qa_chain(vector_store):
         output_key='answer'
     )
 
+    base_retriever = vector_store.as_retriever(search_kwargs={"k": 10})
+
+    model = HuggingFaceCrossEncoder(model_name="BAAI/bge-reranker-base")
+
+    compressor = CrossEncoderReranker(model=model, top_n=3)
+
+    compression_retriever = ContextualCompressionRetriever(
+        base_compressor=compressor, base_retriever=base_retriever
+    )
+
     custom_prompt_object = PromptTemplate(
         template=CUSTOM_PROMPT_TEMPLATE,
         input_variables=["context", "chat_history", "question"]
@@ -73,9 +86,10 @@ def get_qa_chain(vector_store):
 
     conversation_chain = ConversationalRetrievalChain.from_llm(
         llm=llm,
-        retriever=vector_store.as_retriever(),
+        retriever=compression_retriever,
         memory=memory,
         combine_docs_chain_kwargs={"prompt": custom_prompt_object},
         return_source_documents=True
     )
+
     return conversation_chain

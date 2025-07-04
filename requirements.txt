@@ -4,3 +4,7 @@ langchain_community
 pypdf
 faiss-cpu
 gpt4all
+langchain-ollama
+watchdog
+sentence-transformers
+torch
