@@ -9,6 +9,7 @@ from langchain_ollama import ChatOllama
 from langchain_community.cross_encoders import HuggingFaceCrossEncoder
 from langchain.retrievers import ContextualCompressionRetriever
 from langchain.retrievers.document_compressors import CrossEncoderReranker
+from langchain.chains.summarize import load_summarize_chain
 
 
 def process_and_store_documents(pdf_docs):
@@ -34,7 +35,33 @@ def process_and_store_documents(pdf_docs):
     embedding_model = GPT4AllEmbeddings()
     vector_store = FAISS.from_documents(all_chunks, embedding=embedding_model)
 
-    return vector_store
+    return vector_store, all_chunks
+
+
+def get_quick_summary_chain():
+    """
+    Creates and returns a simple 'stuff' summarization chain for speed.
+    """
+    llm = ChatOllama(model="mistral", temperature=0.1)
+    summary_chain = load_summarize_chain(
+        llm=llm,
+        chain_type="stuff",
+        verbose=False
+    )
+    return summary_chain
+
+
+def get_comprehensive_summary_chain():
+    """
+    Creates and returns a 'refine' summarization chain for thoroughness.
+    """
+    llm = ChatOllama(model="mistral", temperature=0.1)
+    summary_chain = load_summarize_chain(
+        llm=llm,
+        chain_type="refine",
+        verbose=True
+    )
+    return summary_chain
 
 
 CUSTOM_PROMPT_TEMPLATE = """
