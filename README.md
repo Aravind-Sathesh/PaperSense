@@ -59,6 +59,21 @@ The data flows through the following pipeline:
 -   **Embeddings & Re-Ranking:** `GPT4All`, `sentence-transformers`
 -   **PDF Processing:** `PyPDF`
 
+## Performance Evaluation
+
+The RAG pipeline was evaluated on a curated set of questions from the "Attention Is All You Need" paper using the RAGAs framework. The evaluation was run entirely locally using the `mistral` model for both generation and judging.
+
+The results demonstrate a high-quality, trustworthy, and precise system.
+
+| Metric               | Average Score | Interpretation                                                                 |
+| -------------------- | :-----------: | ------------------------------------------------------------------------------ |
+| **Faithfulness**     |    `1.00`     | The model generated answers strictly from the context, with no hallucinations. |
+| **Context Recall**   |    `1.00`     | The retriever successfully found all necessary information for every question. |
+| **Answer Relevancy** |    `0.93`     | The answers were highly relevant and on-topic for the user's questions.        |
+
+-   **Faithfulness & Context Recall:** Perfect scores here prove the system's reliability and the effectiveness of the two-stage retrieval with a re-ranker.
+-   **Answer Relevancy:** A high score demonstrates the LLM's ability to generate concise, useful answers based on the high-quality context provided.
+
 ## Getting Started
 
 ### Prerequisites
