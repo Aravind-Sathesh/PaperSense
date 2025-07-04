@@ -1,9 +1,9 @@
 import streamlit as st
-from rag_core import process_and_store_documents, get_qa_chain, get_quick_summary_chain, get_comprehensive_summary_chain
+from rag_core import process_and_store_documents, get_qa_chain, get_quick_summary_chain, get_comprehensive_summary_chain, get_compression_retriever, StreamlitCallbackHandler
 
 st.set_page_config(
     page_title="PaperSense",
-    page_icon="📖",
+    page_icon="📚",
     layout="wide"
 )
 
@@ -29,10 +29,12 @@ def main():
 
         if st.button("Process Documents", use_container_width=True, type="primary"):
             if pdf_docs:
-                with st.spinner("Processing documents... This may take a moment."):
+                with st.spinner("Processing documents..."):
                     vector_store, doc_chunks = process_and_store_documents(
                         pdf_docs)
-                    st.session_state.conversation = get_qa_chain(vector_store)
+                    retriever = get_compression_retriever(vector_store)
+                    st.session_state.conversation = get_qa_chain(retriever)
+
                     st.session_state.doc_chunks = doc_chunks
                     st.toast("Documents processed successfully!", icon="🎉")
             else:
@@ -55,7 +57,7 @@ def main():
                     st.session_state.chat_history.append(summary_message)
                     st.toast("Quick summary generated!", icon="⚡️")
 
-            if st.button("📚 Comprehensive Summary", use_container_width=True):
+            if st.button("📊 Comprehensive Summary", use_container_width=True):
                 st.info(
                     "This may take several minutes depending on document length...", icon="⏳")
                 with st.spinner("Generating comprehensive summary... Please be patient."):
@@ -74,7 +76,7 @@ def main():
 
     if st.session_state.conversation:
         for message in st.session_state.chat_history:
-            icon = "👤" if message["role"] == "user" else "🤖"
+            icon = "👤" if message["role"] == "user" else "📚"
             with st.chat_message(message["role"], avatar=icon):
                 st.markdown(message["content"])
                 if message["role"] == "assistant" and "sources" in message and message["sources"]:
@@ -91,12 +93,19 @@ def main():
             with st.chat_message("user", avatar="👤"):
                 st.markdown(user_question)
 
-            with st.spinner("Assistant is thinking..."):
-                response = st.session_state.conversation.invoke(
-                    {'question': user_question})
+            with st.chat_message("assistant", avatar="📚"):
+                response_container = st.empty()
+                st_callback = StreamlitCallbackHandler(response_container)
+                qa_chain = get_qa_chain(
+                    retriever=st.session_state.conversation.retriever,
+                    callbacks=[st_callback]
+                )
+
+                response = qa_chain.invoke(
+                    {'question': user_question, 'chat_history': st.session_state.chat_history})
                 ai_response = response['answer']
                 source_documents = response['source_documents']
-
+                response_container.markdown(ai_response)
                 assistant_message = {
                     "role": "assistant",
                     "content": ai_response,
@@ -104,15 +113,13 @@ def main():
                 }
                 st.session_state.chat_history.append(assistant_message)
 
-                with st.chat_message("assistant", avatar="🤖"):
-                    st.markdown(ai_response)
-                    if source_documents:
-                        with st.expander("View Sources"):
-                            for i, source in enumerate(source_documents):
-                                st.info(
-                                    f"Source {i+1} (Page {source.metadata.get('page', 'N/A')})")
-                                st.markdown(
-                                    f"> {source.page_content.replace('$', 'S')}")
+                if source_documents:
+                    with st.expander("View Sources"):
+                        for i, source in enumerate(source_documents):
+                            st.info(
+                                f"Source {i+1} (Page {source.metadata.get('page', 'N/A')})")
+                            st.markdown(
+                                f"> {source.page_content.replace('$', 'S')}")
 
     else:
         st.info(

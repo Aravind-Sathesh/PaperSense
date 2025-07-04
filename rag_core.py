@@ -10,6 +10,20 @@ from langchain_community.cross_encoders import HuggingFaceCrossEncoder
 from langchain.retrievers import ContextualCompressionRetriever
 from langchain.retrievers.document_compressors import CrossEncoderReranker
 from langchain.chains.summarize import load_summarize_chain
+from langchain.callbacks.base import BaseCallbackHandler
+
+
+class StreamlitCallbackHandler(BaseCallbackHandler):
+    def __init__(self, container):
+        self.container = container
+        self.text = ""
+
+    def on_llm_new_token(self, token: str, **kwargs) -> None:
+        """
+        This method is called every time the LLM generates a new token.
+        """
+        self.text += token
+        self.container.markdown(self.text)
 
 
 def process_and_store_documents(pdf_docs):
@@ -84,26 +98,34 @@ Based strictly on the context provided, here is the answer:
 """
 
 
-def get_qa_chain(vector_store):
+def get_compression_retriever(vector_store):
+    """
+    Creates and returns a retriever with a cross-encoder re-ranker.
+    """
+    base_retriever = vector_store.as_retriever(search_kwargs={"k": 10})
+    model = HuggingFaceCrossEncoder(model_name="BAAI/bge-reranker-base")
+    compressor = CrossEncoderReranker(model=model, top_n=3)
+
+    compression_retriever = ContextualCompressionRetriever(
+        base_compressor=compressor, base_retriever=base_retriever
+    )
+    return compression_retriever
+
+
+def get_qa_chain(retriever, callbacks=None):
     """
     Creates and returns a conversational Q&A chain.
     """
-    llm = ChatOllama(model="mistral", temperature=0.2)
+    llm = ChatOllama(
+        model="mistral",
+        temperature=0.2,
+        callbacks=callbacks
+    )
 
     memory = ConversationBufferMemory(
         memory_key='chat_history',
         return_messages=True,
         output_key='answer'
-    )
-
-    base_retriever = vector_store.as_retriever(search_kwargs={"k": 10})
-
-    model = HuggingFaceCrossEncoder(model_name="BAAI/bge-reranker-base")
-
-    compressor = CrossEncoderReranker(model=model, top_n=3)
-
-    compression_retriever = ContextualCompressionRetriever(
-        base_compressor=compressor, base_retriever=base_retriever
     )
 
     custom_prompt_object = PromptTemplate(
@@ -113,7 +135,7 @@ def get_qa_chain(vector_store):
 
     conversation_chain = ConversationalRetrievalChain.from_llm(
         llm=llm,
-        retriever=compression_retriever,
+        retriever=retriever,
         memory=memory,
         combine_docs_chain_kwargs={"prompt": custom_prompt_object},
         return_source_documents=True
