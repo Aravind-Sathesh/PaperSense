@@ -8,3 +8,6 @@ langchain-ollama
 watchdog
 sentence-transformers
 torch
+ragas
+datasets
+pandas
