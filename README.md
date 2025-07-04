@@ -27,7 +27,7 @@ graph TD
     end
 
     subgraph "Live Q&A Loop"
-        E[User Question] -->|"1. Similarity Search (k=10)"| D;
+        E[User Question] -->|"Similarity Search (k=10)"| D;
         D -->|"Top 10 Chunks"| F["Re-Ranker <br> (bge-reranker-base)"];
         F -->|"Top 3 Chunks (Context)"| G["Ollama LLM <br> (Mistral)"];
         E -->|"User Question"| G;
